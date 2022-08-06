@@ -29,13 +29,14 @@ public class HyperSample : MonoBehaviour
     public void Batch()
     {
         outputIndex = 0;
-        UIGo.SetActive(false);
+        
         StartCoroutine(Execute());
-        UIGo.SetActive(true);
     }
     
     private IEnumerator  Execute()
     {
+        UIGo.SetActive(false);
+        
         var samplePaths = GetFilesPaths(pathInputField.text);
         for (int i = 0; i < samplePaths.Count; i++)
         {
@@ -74,6 +75,8 @@ public class HyperSample : MonoBehaviour
                 }
             }
         }
+        
+        UIGo.SetActive(true);
     }
     
     private void ApplyTransformationToSample(Texture sample, float angle)
