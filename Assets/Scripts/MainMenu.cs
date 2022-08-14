@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class MainMenu : MonoBehaviour
 {
-    public GameObject automaticUI, manualUI, backtoMainMenu, pathFolder;
+    public GameObject mainMenu, automaticUI, manualUI, backtoMainMenu, pathFolder;
     public SpriteRenderer spriteRenderer;
     
     private void Awake()
@@ -14,7 +14,7 @@ public class MainMenu : MonoBehaviour
     public void EnterMainMenu()
     {
         spriteRenderer.sprite = null;
-        gameObject.SetActive(true);
+        mainMenu.SetActive(true);
         
         pathFolder.SetActive(false);
         automaticUI.SetActive(false);
@@ -28,7 +28,7 @@ public class MainMenu : MonoBehaviour
         backtoMainMenu.SetActive(true);
         pathFolder.SetActive(true);
         
-        gameObject.SetActive(false);
+        mainMenu.SetActive(false);
         manualUI.SetActive(false);
     }
     
@@ -38,7 +38,17 @@ public class MainMenu : MonoBehaviour
         backtoMainMenu.SetActive(true);
         pathFolder.SetActive(true);
         
-        gameObject.SetActive(false);
+        mainMenu.SetActive(false);
         automaticUI.SetActive(false);
+    }
+
+    public void Hide()
+    {
+        spriteRenderer.sprite = null;
+        mainMenu.SetActive(false);
+        pathFolder.SetActive(false);
+        automaticUI.SetActive(false);
+        manualUI.SetActive(false);
+        backtoMainMenu.SetActive(false);
     }
 }

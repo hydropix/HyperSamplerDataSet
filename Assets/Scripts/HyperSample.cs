@@ -18,13 +18,13 @@ public class HyperSample : MonoBehaviour
         scaleMin = 0.2f;
 
     public Vector2 positionOffset;
-    public GameObject UIGo;
+    public MainMenu mainMenu;
     public InputField pathInputField;
     public Toggle rotationToggle, flipXToggle, flipYToggle;
     
     private SpriteRenderer spriteRenderer;
     private int outputIndex;
-    private bool mouseLeftBt_Up, rightMouseBt, shiftModifier;
+    private bool mouseLeftBt_Up, rightMouseBt, shiftModifier, escapeBt_Down;
     private float mouseScrollWheel;
     
     private void Start()
@@ -41,7 +41,7 @@ public class HyperSample : MonoBehaviour
     public void AutomaticBatch()
     {
         outputIndex = 0;
-        UIGo.SetActive(false);
+        mainMenu.Hide();
         StartCoroutine(ExecuteAutomaticBatch());
     }
     
@@ -87,7 +87,7 @@ public class HyperSample : MonoBehaviour
             }
         }
         
-        UIGo.SetActive(true);
+        mainMenu.Hide();
     }  
     
     
@@ -101,7 +101,7 @@ public class HyperSample : MonoBehaviour
     public  void ManualBatch()
     {
         outputIndex = 0;
-        UIGo.SetActive(false);
+        mainMenu.Hide();
         var samplePaths = GetFilesPaths(pathInputField.text);
         
         PlayerPrefs.SetString("folderPath", pathInputField.text);
@@ -153,9 +153,15 @@ public class HyperSample : MonoBehaviour
                     ScreenToPng();
                     Sprite sprite = spriteRenderer.sprite;
                     spriteRenderer.sprite = null;
-                    yield return new WaitForSeconds(0.05f);
+                    yield return new WaitForSeconds(0.1f);
                     spriteRenderer.sprite = sprite;
                     mouseLeftBt_Up = false;
+                }
+
+                if (escapeBt_Down)
+                {
+                    mainMenu.GetComponent<MainMenu>().EnterMainMenu();
+                    escapeBt_Down = false;
                 }
                 
             } 
@@ -174,6 +180,9 @@ public class HyperSample : MonoBehaviour
         if (Input.GetMouseButtonUp(1))
             rightMouseBt = true;
 
+        if(Input.GetKey(KeyCode.Escape))
+            escapeBt_Down = true;
+        
         shiftModifier = Input.GetKey(KeyCode.LeftShift);
         mouseScrollWheel = Input.GetAxis("Mouse ScrollWheel");
     }
