@@ -11,22 +11,31 @@ public class HyperSample : MonoBehaviour
 {
     public Vector2Int sampleSize;
     public Vector2 windowSize;
-
     public AnimationCurve scaleRotateCurve;
-
     public float
         positionDragMultiplier = 0.001f,
         rotationMultiplier = 100f,
         scaleMultiplier = 50f,
-        scaleMin = 0.2f;
+        scaleMin = 0.1f,
+        scaleStart = 0.25f;
 
     public MainMenu mainMenu;
     public InputField pathInputField;
+    public Text grabInfoText, pixelSizeWarningText;
     public Toggle rotationToggle, flipXToggle, flipYToggle;
+    public GameObject grabFrame, pathWarning, pixelSizeWarningGO;
 
+    private const float pixelSizeWarning = 100f / 1024 ;
     private SpriteRenderer spriteRenderer;
     private int outputIndex;
-    private bool mouseLeftBt_Up, rightMouseBt, shiftModifier, escapeBt_Down;
+    private bool
+        mouseLeftBt_Up,
+        rightMouseBt,
+        shiftModifier,
+        escapeBt_Down,
+        mouseNextBt_Up,
+        mouseBackBt_Up;
+
     private float mouseScrollWheel;
 
     private void Start()
@@ -36,18 +45,29 @@ public class HyperSample : MonoBehaviour
         Screen.fullScreenMode = FullScreenMode.Windowed;
         spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.sprite = null;
+        grabFrame.SetActive(false);
+
+        // read last user settings
         pathInputField.text = PlayerPrefs.GetString("folderPath");
     }
 
-
+    //  █████╗  ██╗   ██╗ ████████╗  ██████╗ 
+    // ██╔══██╗ ██║   ██║ ╚══██╔══╝ ██╔═══██╗
+    // ███████║ ██║   ██║    ██║    ██║   ██║
+    // ██╔══██║ ██║   ██║    ██║    ██║   ██║
+    // ██║  ██║ ╚██████╔╝    ██║    ╚██████╔╝
+    // ╚═╝  ╚═╝  ╚═════╝     ╚═╝     ╚═════╝ 
     public void AutomaticBatch()
     {
-        outputIndex = 0;
-        mainMenu.Hide();
-        StartCoroutine(ExecuteAutomaticBatch());
+        if (CheckPath(pathInputField.text))
+        {
+            outputIndex = 0;
+            mainMenu.Hide();
+            StartCoroutine(ExecuteAutomaticBatch());
+        }
     }
 
-
+    
     private IEnumerator ExecuteAutomaticBatch()
     {
         var samplePaths = GetFilesPaths(pathInputField.text);
@@ -88,50 +108,94 @@ public class HyperSample : MonoBehaviour
                 }
             }
         }
-
         mainMenu.EnterMainMenu();
     }
-
 
     private void ApplyTransformationToSample(Texture sample, float angle)
     {
         transform.localRotation = Quaternion.Euler(0, 0, angle);
-        transform.localScale = Vector3.one * (GetMinLenghtFor(45) / (sample.height > sample.width ? sample.width : sample.height) * 100f);
+        transform.localScale = Vector3.one * (GetMinLenghtFor(45) / (sample.height > sample.width ? sample.width : sample.height) * 50f);
     }
 
 
+    // ███╗   ███╗  █████╗  ███╗   ██╗ ██╗   ██╗  █████╗  ██╗     
+    // ████╗ ████║ ██╔══██╗ ████╗  ██║ ██║   ██║ ██╔══██╗ ██║     
+    // ██╔████╔██║ ███████║ ██╔██╗ ██║ ██║   ██║ ███████║ ██║     
+    // ██║╚██╔╝██║ ██╔══██║ ██║╚██╗██║ ██║   ██║ ██╔══██║ ██║     
+    // ██║ ╚═╝ ██║ ██║  ██║ ██║ ╚████║ ╚██████╔╝ ██║  ██║ ███████╗
+    // ╚═╝     ╚═╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝  ╚═════╝  ╚═╝  ╚═╝ ╚══════╝
     public void ManualBatch()
     {
-        outputIndex = 0;
-        mainMenu.Hide();
-        var samplePaths = GetFilesPaths(pathInputField.text);
+        if (CheckPath(pathInputField.text))
+        {
+            outputIndex = 0;
+            mainMenu.Hide();
 
-        PlayerPrefs.SetString("folderPath", pathInputField.text);
-        PlayerPrefs.Save();
+            var samplePaths = GetFilesPaths(pathInputField.text);
 
-        StartCoroutine(ManualImageSelection(samplePaths));
+            PlayerPrefs.SetString("folderPath", pathInputField.text);
+            PlayerPrefs.Save();
+
+            StartCoroutine(ManualImageSelection(samplePaths));
+        }
     }
 
     private IEnumerator ManualImageSelection(List<string> samplePaths)
     {
+        grabFrame.SetActive(true);
+
+
         var rotation = 0f;
-        var scale = 1f;
+        var scale = scaleStart;
         transform.localRotation = Quaternion.Euler(0, 0, rotation);
         transform.localScale = new Vector3(scale, scale, scale);
 
         for (int i = 0; i < samplePaths.Count; i++)
         {
-            Texture2D sampleTexture = GetSampleTexture(samplePaths[i]);
-            spriteRenderer.sprite = Sprite.Create(sampleTexture, new Rect(0f, 0f, sampleTexture.width, sampleTexture.height), Vector2.one * 0.5f);
+            // Update info text
+            grabInfoText.text = $"{i + 1}/{samplePaths.Count}";
+            grabInfoText.text += $"\nFilename: {Path.GetFileName(samplePaths[i])}";
+
+            // Load sample image
+            Texture2D sampleImage = GetSampleTexture(samplePaths[i]);
+            grabInfoText.text += $"\nSize: {sampleImage.width}x{sampleImage.height}";
+            spriteRenderer.sprite = Sprite.Create(sampleImage, new Rect(0f, 0f, sampleImage.width, sampleImage.height), Vector2.one * 0.5f);
+            
+            // Start zoom to pixel size 1:1 screen
+            scale = pixelSizeWarning;
+            transform.localScale = new Vector3(scale, scale, scale);
+            
             yield return new WaitForEndOfFrame();
+            ResetAllButtons();
 
             do
             {
                 yield return new WaitForEndOfFrame();
+                
+                scale = Mathf.Min(pixelSizeWarning * 2f, scale);
+                
+                if (pixelSizeWarning *2f < scale)
+                {
+                    ShowPixelSizeWarningMessage("Pixel Size is too large for 256x256");
+                }
+                else if (pixelSizeWarning < scale )
+                {
+                    ShowPixelSizeWarningMessage("Pixel Size is too large for 512x512, but still OK for 256x256");
+                }
+                else
+                {
+                    HidePixelSizeWarningMessage();
+                }
+                
+                pixelSizeWarningGO.SetActive(pixelSizeWarning < transform.localScale.x);
+   
+                // Move image
                 Vector2 mousePos = ((Vector2)Input.mousePosition + new Vector2(windowSize.x * -0.5f, windowSize.y * -0.5f)) * positionDragMultiplier;
                 transform.localPosition = mousePos;
+
                 if (mouseScrollWheel != 0f)
                 {
+                    // Rotate image
                     if (shiftModifier)
                     {
                         rotation += mouseScrollWheel * rotationMultiplier;
@@ -139,6 +203,7 @@ public class HyperSample : MonoBehaviour
                     }
                     else
                     {
+                        // Zoom image
                         if (mouseScrollWheel > 0)
                             scale += scale * scaleMultiplier;
                         else
@@ -148,9 +213,10 @@ public class HyperSample : MonoBehaviour
                         transform.localScale = new Vector3(scale, scale, scale);
                     }
 
-                    mouseScrollWheel = 0f; // used to reset the mouse scroll wheel value
+                    mouseScrollWheel = 0f; // used
                 }
 
+                // Grab and Save
                 if (mouseLeftBt_Up)
                 {
                     ScreenToPng();
@@ -161,15 +227,27 @@ public class HyperSample : MonoBehaviour
                     mouseLeftBt_Up = false;
                 }
 
+                // Exit, back to main menu
                 if (escapeBt_Down)
                 {
-                    mainMenu.GetComponent<MainMenu>().EnterMainMenu();
+                    grabFrame.SetActive(false);
+                    mainMenu.EnterMainMenu();
                     escapeBt_Down = false;
+                    yield break;
                 }
-            } while (rightMouseBt == false); // Next image
 
-            rightMouseBt = false;
+                // Rewind index
+                if (mouseBackBt_Up)
+                {
+                    i = i > 1 ? i - 2 : -1;
+                }
+            } while (rightMouseBt == false && mouseNextBt_Up == false && mouseBackBt_Up == false); // Next image
+
+            rightMouseBt = mouseNextBt_Up = mouseBackBt_Up = false;
         }
+
+        // Hide grab frame
+        grabFrame.SetActive(false);
     }
 
 
@@ -185,17 +263,32 @@ public class HyperSample : MonoBehaviour
         if (Input.GetKey(KeyCode.Escape))
             escapeBt_Down = true;
 
+        // optional mouse buttons
+        if (Input.GetMouseButtonUp(3)) // back 
+            mouseBackBt_Up = true;
+
+        if (Input.GetMouseButtonUp(4)) // next 
+            mouseNextBt_Up = true;
+
         shiftModifier = Input.GetKey(KeyCode.LeftShift);
         mouseScrollWheel = Input.GetAxis("Mouse ScrollWheel");
     }
 
+    private void ResetAllButtons()
+    {
+        mouseLeftBt_Up = false;
+        rightMouseBt = false;
+        escapeBt_Down = false;
+        mouseBackBt_Up = false;
+        mouseNextBt_Up = false;
+    }
 
     private void ScreenToPng(bool safeFolderIndexCheck = true)
     {
-        // Set Camera
-        //Camera.main.rect = new Rect(0.25f, 0.25f, 0.5f, 0.5f);
-
         var path = pathInputField.text + "/output/";
+
+        // Create output folder if it doesn't exist
+        // Prevents overwriting of old .png files
         if (safeFolderIndexCheck)
         {
             if (!Directory.Exists(path))
@@ -220,28 +313,25 @@ public class HyperSample : MonoBehaviour
             }
         }
 
+        // screen capture
         var fileName = path + "dataSet_" + outputIndex + ".png";
-        //ScreenCapture.CaptureScreenshot(fileName);
-        //Texture2D screenShot = ScreenCapture.CaptureScreenshotAsTexture();
-        // rectangular area of the screen to capture
         var rect = new Rect(sampleSize.x * 0.5f, sampleSize.y * 0.5f, sampleSize.x, sampleSize.y);
-        // create a new texture with the size of the screen, and make it readable
         var screenShot = new Texture2D(sampleSize.x, sampleSize.y, TextureFormat.RGB24, false);
-        // read the pixels from the screen shot texture into an array
         screenShot.ReadPixels(rect, 0, 0);
-        // apply the array to the screen shot texture
         screenShot.Apply();
+
         // encode the screen shot to a PNG
         var bytes = screenShot.EncodeToPNG();
+
         // save the PNG to disk
         File.WriteAllBytes(fileName, bytes);
 
         outputIndex++;
-
-        // Revert Camera
-        //Camera.main.rect = new Rect(0f, 0f, 1f, 1f);
     }
 
+    /// <summary>
+    /// Get the list of png and jpg path files in a folder
+    /// </summary>
     private static List<string> GetFilesPaths(string folder, bool recursive = false)
     {
         var samplePaths = new List<string>();
@@ -250,11 +340,44 @@ public class HyperSample : MonoBehaviour
         return samplePaths;
     }
 
+    private bool CheckPath(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            StartCoroutine(ShowPathWarning(pathWarning));
+            return false;
+        }
+        return true;
+    }
+
+    private IEnumerator ShowPathWarning(GameObject warningGO)
+    {
+        warningGO.SetActive(true);
+        yield return new WaitForSeconds(1f);
+        warningGO.SetActive(false);
+    }
+
     private float GetMinLenghtFor(float angle)
     {
         return scaleRotateCurve.Evaluate(angle % 90f / 90f);
     }
 
+    private void ShowPixelSizeWarningMessage(string message)
+    {
+        pixelSizeWarningText.text = message;
+        pixelSizeWarningGO.gameObject.SetActive(true);
+    }
+    
+    private void HidePixelSizeWarningMessage()
+    {
+        pixelSizeWarningGO.gameObject.SetActive(false);
+    }
+    
+    /// <summary>
+    /// Get the texture of a sample image
+    /// </summary>
+    /// <param name="path">file path</param>
+    /// <returns>Texture2D</returns>
     private static Texture2D GetSampleTexture(string path)
     {
         var bytes = File.ReadAllBytes(path);
