@@ -38,6 +38,11 @@ public class HyperSample : MonoBehaviour
 
     private float mouseScrollWheel;
 
+    public RectTransform rectA;
+    public RectTransform rectB;
+    
+
+    
     private void Start()
     {
         Screen.SetResolution((int)windowSize.x, (int)windowSize.y, false);
@@ -250,7 +255,34 @@ public class HyperSample : MonoBehaviour
         grabFrame.SetActive(false);
     }
 
+    private void AdjustRectASize()
+    {
+        // Calculer les coins du rectB dans le repère du rectA
+        var cornersB = new Vector3[4];
+        rectB.GetWorldCorners(cornersB);
+        var localCornersB = new Vector2[4];
+        for (int i = 0; i < 4; i++)
+        {
+            localCornersB[i] = rectA.InverseTransformPoint(cornersB[i]);
+        }
 
+        // Trouver les coordonnées minimales et maximales en x et y
+        Vector2 min = localCornersB[0];
+        Vector2 max = localCornersB[0];
+        for (int i = 1; i < 4; i++)
+        {
+            min = Vector2.Min(min, localCornersB[i]);
+            max = Vector2.Max(max, localCornersB[i]);
+        }
+
+        // Ajuster la taille et la position de rectA
+        Vector2 newSize = max - min;
+        rectA.sizeDelta = newSize;
+
+        Vector2 newPos = (max + min) / 2;
+        rectA.localPosition = newPos;
+    }
+    
     private void Update()
     {
         // Get inputs and register them
