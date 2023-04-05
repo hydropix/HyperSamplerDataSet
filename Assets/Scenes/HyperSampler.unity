@@ -132,14 +132,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 17242217}
-  - component: {fileID: 17242218}
   m_Layer: 5
   m_Name: PathWarning
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &17242217
 RectTransform:
   m_ObjectHideFlags: 0
@@ -161,18 +160,6 @@ RectTransform:
   m_AnchoredPosition: {x: -5.5, y: 50.97563}
   m_SizeDelta: {x: 220.4295, y: 16.0547}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &17242218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 17242216}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c33093905a68a5449bc81552d7e3d77, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &80529279
 GameObject:
   m_ObjectHideFlags: 0
@@ -531,6 +518,8 @@ MonoBehaviour:
   grabFrame: {fileID: 1619805958}
   pathWarning: {fileID: 17242216}
   pixelSizeWarningGO: {fileID: 1653924170}
+  rectA: {fileID: 0}
+  rectB: {fileID: 0}
 --- !u!4 &271752374
 Transform:
   m_ObjectHideFlags: 0
@@ -1772,6 +1761,7 @@ GameObject:
   - component: {fileID: 1015210260}
   - component: {fileID: 1015210259}
   - component: {fileID: 1015210258}
+  - component: {fileID: 1015210261}
   m_Layer: 5
   m_Name: Input Field
   m_TagString: Untagged
@@ -1903,6 +1893,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1015210256}
   m_CullTransparentMesh: 1
+--- !u!114 &1015210261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015210256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c33093905a68a5449bc81552d7e3d77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1235070519
 GameObject:
   m_ObjectHideFlags: 0
@@ -2584,7 +2586,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Enter images folder...
+  m_Text: Drag and Drop images folder...
 --- !u!222 &1608863871
 CanvasRenderer:
   m_ObjectHideFlags: 0
