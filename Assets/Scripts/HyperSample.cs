@@ -155,14 +155,15 @@ public class HyperSample : MonoBehaviour
         transform.localRotation = Quaternion.Euler(0, 0, rotation);
         transform.localScale = new Vector3(scale, scale, scale);
 
-        for (int i = 0; i < samplePaths.Count; i++)
+        for (int index = 0; index < samplePaths.Count; index++)
         {
+            Debug.Log(index);
             // Update info text
-            grabInfoText.text = $"{i + 1}/{samplePaths.Count}";
-            grabInfoText.text += $"\nFilename: {Path.GetFileName(samplePaths[i])}";
+            grabInfoText.text = $"{index + 1}/{samplePaths.Count}";
+            grabInfoText.text += $"\nFilename: {Path.GetFileName(samplePaths[index])}";
 
             // Load sample image
-            Texture2D sampleImage = GetSampleTexture(samplePaths[i]);
+            Texture2D sampleImage = GetSampleTexture(samplePaths[index]);
             grabInfoText.text += $"\nSize: {sampleImage.width}x{sampleImage.height}";
             spriteRenderer.sprite = Sprite.Create(sampleImage, new Rect(0f, 0f, sampleImage.width, sampleImage.height), Vector2.one * 0.5f);
             
@@ -178,19 +179,39 @@ public class HyperSample : MonoBehaviour
                 yield return new WaitForEndOfFrame();
                 
                 scale = Mathf.Min(pixelSizeWarning * 2f, scale);
+                Debug.Log(scale);
+                switch (scale)
+                {
+                    case var s when s < pixelSizeWarning * 0.5f:
+                        grabInfoText.text = "Pixel Size is too large for 1024x1024";
+                        break;
+                    case var s when s < pixelSizeWarning:
+                        grabInfoText.text = "Pixel Size is too large for 512x512";
+                        break;
+                    case var s when s < pixelSizeWarning * 2f:
+                        grabInfoText.text = "Pixel Size is too large for 256x256";
+                        break;
+                    default:
+                        grabInfoText.text = "Pixel Size is OK";
+                        break;    
+                }
                 
-                if (pixelSizeWarning *2f < scale)
-                {
-                    ShowPixelSizeWarningMessage("Pixel Size is too large for 256x256");
-                }
-                else if (pixelSizeWarning < scale )
-                {
-                    ShowPixelSizeWarningMessage("Pixel Size is too large for 512x512, but still OK for 256x256");
-                }
-                else
-                {
-                    HidePixelSizeWarningMessage();
-                }
+                // if (pixelSizeWarning *2f < scale)
+                // {
+                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 256x256");
+                // }
+                // else if (pixelSizeWarning < scale )
+                // {
+                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 512x512, but still OK for 256x256");
+                // }
+                // else if (pixelSizeWarning * 0.5f < scale)
+                // {
+                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 1024x1024, but still OK for 512x512");
+                // }
+                // else 
+                // {
+                //     HidePixelSizeWarningMessage();
+                // }
                 
                 pixelSizeWarningGO.SetActive(pixelSizeWarning < transform.localScale.x);
    
@@ -244,15 +265,16 @@ public class HyperSample : MonoBehaviour
                 // Rewind index
                 if (mouseBackBt_Up)
                 {
-                    i = i > 1 ? i - 2 : -1;
+                    index = index > 1 ? index - 2 : -1;
                 }
             } while (rightMouseBt == false && mouseNextBt_Up == false && mouseBackBt_Up == false); // Next image
 
             rightMouseBt = mouseNextBt_Up = mouseBackBt_Up = false;
         }
 
-        // Hide grab frame
+        // Leave
         grabFrame.SetActive(false);
+        mainMenu.EnterMainMenu();
     }
 
     private void AdjustRectASize()
@@ -294,12 +316,12 @@ public class HyperSample : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Escape))
             escapeBt_Down = true;
-
-        // optional mouse buttons
-        if (Input.GetMouseButtonUp(3)) // back 
+        
+        // Navigation buttons
+        if (Input.GetMouseButtonUp(3)||Input.GetKeyUp(KeyCode.LeftArrow)) // back 
             mouseBackBt_Up = true;
 
-        if (Input.GetMouseButtonUp(4)) // next 
+        if (Input.GetMouseButtonUp(4)|Input.GetKeyUp(KeyCode.RightArrow)) // next 
             mouseNextBt_Up = true;
 
         shiftModifier = Input.GetKey(KeyCode.LeftShift);
