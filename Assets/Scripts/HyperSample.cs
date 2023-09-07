@@ -369,11 +369,15 @@ public class HyperSample : MonoBehaviour
 
         // screen capture
         var fileName = path + "dataSet_" + outputIndex + ".png";
-        var rect = new Rect(sampleSize.x * 0.5f, sampleSize.y * 0.5f, sampleSize.x, sampleSize.y);
-        var screenShot = new Texture2D(sampleSize.x, sampleSize.y, TextureFormat.RGB24, false);
-        screenShot.ReadPixels(rect, 0, 0);
-        screenShot.Apply();
-
+        //var rect = new Rect(sampleSize.x * 0.5f, sampleSize.y * 0.5f, sampleSize.x, sampleSize.y);
+        //var screenShot = new Texture2D(sampleSize.x, sampleSize.y, TextureFormat.RGB24, false);
+        //grabFrame.SetActive(false);
+        //yield return new WaitForEndOfFrame();
+        Texture2D screenShot = ScreenCapture.CaptureScreenshotAsTexture();
+        //grabFrame.SetActive(true);
+        // screenShot.ReadPixels(rect, 0, 0);
+        // screenShot.Apply();
+    
         // encode the screen shot to a PNG
         var bytes = screenShot.EncodeToPNG();
 
