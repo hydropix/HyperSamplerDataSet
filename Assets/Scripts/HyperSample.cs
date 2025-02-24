@@ -9,7 +9,7 @@ using Toggle = UnityEngine.UI.Toggle;
 [RequireComponent(typeof(SpriteRenderer))]
 public class HyperSample : MonoBehaviour
 {
-    public Vector2Int sampleSize;
+    
     public Vector2 windowSize;
     public AnimationCurve scaleRotateCurve;
     public float
@@ -21,7 +21,6 @@ public class HyperSample : MonoBehaviour
 
     public MainMenu mainMenu;
     public InputField pathInputField;
-    public Text grabInfoText, pixelSizeWarningText;
     public Toggle rotationToggle, flipXToggle, flipYToggle;
     public GameObject grabFrame, pathWarning, pixelSizeWarningGO;
 
@@ -34,14 +33,11 @@ public class HyperSample : MonoBehaviour
         shiftModifier,
         escapeBt_Down,
         mouseNextBt_Up,
-        mouseBackBt_Up;
+        mouseBackBt_Up,
+        spacebar;
 
     private float mouseScrollWheel;
-
-    public RectTransform rectA;
-    public RectTransform rectB;
-    
-
+    private bool backgroundColorToggle;
     
     private void Start()
     {
@@ -149,7 +145,6 @@ public class HyperSample : MonoBehaviour
     {
         grabFrame.SetActive(true);
 
-
         var rotation = 0f;
         var scale = scaleStart;
         transform.localRotation = Quaternion.Euler(0, 0, rotation);
@@ -157,14 +152,9 @@ public class HyperSample : MonoBehaviour
 
         for (int index = 0; index < samplePaths.Count; index++)
         {
-            Debug.Log(index);
             // Update info text
-            grabInfoText.text = $"{index + 1}/{samplePaths.Count}";
-            grabInfoText.text += $"\nFilename: {Path.GetFileName(samplePaths[index])}";
-
             // Load sample image
             Texture2D sampleImage = GetSampleTexture(samplePaths[index]);
-            grabInfoText.text += $"\nSize: {sampleImage.width}x{sampleImage.height}";
             spriteRenderer.sprite = Sprite.Create(sampleImage, new Rect(0f, 0f, sampleImage.width, sampleImage.height), Vector2.one * 0.5f);
             
             // Start zoom to pixel size 1:1 screen
@@ -179,39 +169,6 @@ public class HyperSample : MonoBehaviour
                 yield return new WaitForEndOfFrame();
                 
                 scale = Mathf.Min(pixelSizeWarning * 2f, scale);
-                Debug.Log(scale);
-                switch (scale)
-                {
-                    case var s when s < pixelSizeWarning * 0.5f:
-                        grabInfoText.text = "Pixel Size is too large for 1024x1024";
-                        break;
-                    case var s when s < pixelSizeWarning:
-                        grabInfoText.text = "Pixel Size is too large for 512x512";
-                        break;
-                    case var s when s < pixelSizeWarning * 2f:
-                        grabInfoText.text = "Pixel Size is too large for 256x256";
-                        break;
-                    default:
-                        grabInfoText.text = "Pixel Size is OK";
-                        break;    
-                }
-                
-                // if (pixelSizeWarning *2f < scale)
-                // {
-                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 256x256");
-                // }
-                // else if (pixelSizeWarning < scale )
-                // {
-                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 512x512, but still OK for 256x256");
-                // }
-                // else if (pixelSizeWarning * 0.5f < scale)
-                // {
-                //     ShowPixelSizeWarningMessage("Pixel Size is too large for 1024x1024, but still OK for 512x512");
-                // }
-                // else 
-                // {
-                //     HidePixelSizeWarningMessage();
-                // }
                 
                 pixelSizeWarningGO.SetActive(pixelSizeWarning < transform.localScale.x);
    
@@ -267,6 +224,15 @@ public class HyperSample : MonoBehaviour
                 {
                     index = index > 1 ? index - 2 : -1;
                 }
+                
+                // toggle backcolor
+                if (spacebar)
+                {
+                    backgroundColorToggle = !backgroundColorToggle;
+                    Camera.main.backgroundColor = backgroundColorToggle ? Color.black : Color.white;
+                    spacebar = false;
+                }
+                
             } while (rightMouseBt == false && mouseNextBt_Up == false && mouseBackBt_Up == false); // Next image
 
             rightMouseBt = mouseNextBt_Up = mouseBackBt_Up = false;
@@ -277,34 +243,6 @@ public class HyperSample : MonoBehaviour
         mainMenu.EnterMainMenu();
     }
 
-    private void AdjustRectASize()
-    {
-        // Calculer les coins du rectB dans le repère du rectA
-        var cornersB = new Vector3[4];
-        rectB.GetWorldCorners(cornersB);
-        var localCornersB = new Vector2[4];
-        for (int i = 0; i < 4; i++)
-        {
-            localCornersB[i] = rectA.InverseTransformPoint(cornersB[i]);
-        }
-
-        // Trouver les coordonnées minimales et maximales en x et y
-        Vector2 min = localCornersB[0];
-        Vector2 max = localCornersB[0];
-        for (int i = 1; i < 4; i++)
-        {
-            min = Vector2.Min(min, localCornersB[i]);
-            max = Vector2.Max(max, localCornersB[i]);
-        }
-
-        // Ajuster la taille et la position de rectA
-        Vector2 newSize = max - min;
-        rectA.sizeDelta = newSize;
-
-        Vector2 newPos = (max + min) / 2;
-        rectA.localPosition = newPos;
-    }
-    
     private void Update()
     {
         // Get inputs and register them
@@ -316,6 +254,9 @@ public class HyperSample : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Escape))
             escapeBt_Down = true;
+        
+        if (Input.GetKeyUp(KeyCode.Space))
+            spacebar = true;
         
         // Navigation buttons
         if (Input.GetMouseButtonUp(3)||Input.GetKeyUp(KeyCode.LeftArrow)) // back 
@@ -369,15 +310,8 @@ public class HyperSample : MonoBehaviour
 
         // screen capture
         var fileName = path + "dataSet_" + outputIndex + ".png";
-        //var rect = new Rect(sampleSize.x * 0.5f, sampleSize.y * 0.5f, sampleSize.x, sampleSize.y);
-        //var screenShot = new Texture2D(sampleSize.x, sampleSize.y, TextureFormat.RGB24, false);
-        //grabFrame.SetActive(false);
-        //yield return new WaitForEndOfFrame();
         Texture2D screenShot = ScreenCapture.CaptureScreenshotAsTexture();
-        //grabFrame.SetActive(true);
-        // screenShot.ReadPixels(rect, 0, 0);
-        // screenShot.Apply();
-    
+
         // encode the screen shot to a PNG
         var bytes = screenShot.EncodeToPNG();
 
@@ -419,17 +353,7 @@ public class HyperSample : MonoBehaviour
     {
         return scaleRotateCurve.Evaluate(angle % 90f / 90f);
     }
-
-    private void ShowPixelSizeWarningMessage(string message)
-    {
-        pixelSizeWarningText.text = message;
-        pixelSizeWarningGO.gameObject.SetActive(true);
-    }
     
-    private void HidePixelSizeWarningMessage()
-    {
-        pixelSizeWarningGO.gameObject.SetActive(false);
-    }
     
     /// <summary>
     /// Get the texture of a sample image
